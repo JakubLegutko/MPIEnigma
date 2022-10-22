@@ -13,10 +13,10 @@
 #include"MessageComparator.h"
 #include"SimpleMessageComparator.h"
 #include"EnigmaBreaker.h"
-#include"SerialEnigmaBreaker.h"
+#include"MPIEnigmaBreaker.h"
 
-const uint ROTORS = 6;
-const uint LARGEST_ROTOR_SETTING = 10;
+const uint ROTORS = 7;
+const uint LARGEST_ROTOR_SETTING = 8;
 const uint MESSAGE_LENGTH = 1536;
 const uint EXPECTED_MESSAGE_LENGTH = 64;
 const uint MAX_VALUE_IN_MESSAGE = 256;
@@ -44,7 +44,7 @@ int main(int argc, char **argv) {
 	Enigma *enigma = new Enigma( enigmaMachinery );
 
 	MessageComparator *comparator = new SimpleMessageComparator();
-	EnigmaBreaker *breaker = new SerialEnigmaBreaker(enigma, comparator);
+	EnigmaBreaker *breaker = new MPIEnigmaBreaker(enigma, comparator);
 
 	if ( rank == MPI_ROOT_PROCESS_RANK ) {
 		uint *messageToDecode = new uint[ MESSAGE_LENGTH ];
