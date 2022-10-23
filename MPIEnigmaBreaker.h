@@ -16,8 +16,13 @@ private:
 	bool solutionFound( uint *rotorSettingsProposal );
 public:
 	int rank;
+	int size;
+	uint *expected = 0;
+	uint expectedLength;
 	MPIEnigmaBreaker( Enigma *enigma, MessageComparator *comparator );
-
+	
+	void setSampleToFind( uint *expected, uint expectedLength );
+	void setMessageToDecode( uint *message, uint messageLength );
 	void crackMessage();
 	void getResult( uint *rotorPositions );
 
