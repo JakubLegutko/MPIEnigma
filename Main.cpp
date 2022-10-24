@@ -57,9 +57,9 @@ int main(int argc, char **argv) {
 		breaker->setSampleToFind(expectedMessage, EXPECTED_MESSAGE_LENGTH);
 	}
 
-	cout << "Crack message - START" << endl;
+	cout << "Crack message - START" << rank<< endl;
 	breaker->crackMessage();
-	cout << "Crack message - DONE" << endl;
+	cout << "Crack message - DONE" << rank<<endl;
 
 	if ( rank == MPI_ROOT_PROCESS_RANK ) {
 		uint *result = new uint[ ROTORS ];
