@@ -9,7 +9,6 @@
 #define MPIENIGMABREAKER_H_
 
 #include "EnigmaBreaker.h"
-#include "mpi.h"
 
 class MPIEnigmaBreaker : public EnigmaBreaker {
 private:
@@ -28,5 +27,4 @@ public:
 
 	virtual ~MPIEnigmaBreaker();
 };
-
 #endif /* MPIENIGMABREAKER_H_ */

@@ -6,6 +6,7 @@
  */
 
 #include "MPIEnigmaBreaker.h"
+#include "mpi.h"
 
 MPIEnigmaBreaker::MPIEnigmaBreaker( Enigma *enigma, MessageComparator *comparator ) : EnigmaBreaker(enigma, comparator ) {
 	MPI_Comm_rank(MPI_COMM_WORLD, &rank);
@@ -47,6 +48,7 @@ void MPIEnigmaBreaker::crackMessage() {
 		comparator->setExpectedFragment(expected, expectedLength);
 		//cout << "JESTEM RANK " << rank << " I wlasnie ustawilem mase rzeczy, konkretnie length, expected i length "<< messageLength  << " " << expectedLength << " "<< endl;
 	}
+	
 		//cout << "JESTEM RANK " << rank << endl;
 	/**
 	 * Poniższy kod (w szczególności pętle) jest paskudny. Można to
@@ -54,6 +56,8 @@ void MPIEnigmaBreaker::crackMessage() {
 	 * ale szkoda czasu. Ta proteza tu wystarczy.
 	 * Umawiamy się niniejszym, że więcej niż maxRotors rotorów nie będzie!
 	 */
+	MPI_Comm duplicated_communicator;
+    MPI_Comm_dup(MPI_COMM_WORLD, &duplicated_communicator);
 	MPI_Request endOfComputing;
 	MPI_Request broadcastResult;
 	MPI_Request finderRank;
@@ -75,7 +79,8 @@ void MPIEnigmaBreaker::crackMessage() {
 	}
 
 	uint *r = new uint[ MAX_ROTORS ];
-
+	if (rank != 0)
+	MPI_Ibcast(dummy,1,MPI_INT,0,duplicated_communicator,&endOfComputing);
 rMax[0] = ((rotorLargestSetting * (rank + 1)) / size) < rotorLargestSetting ? ((rotorLargestSetting * (rank + 1)) / size) : rotorLargestSetting;
 		//cout << "JESTEM RANK ustawiłem rMAx na " << rank << rMax[0] << endl;
 	for (r[0] = (rotorLargestSetting * rank) / size;r[0] <= rMax[0]; r[0]++ ){
@@ -91,12 +96,11 @@ rMax[0] = ((rotorLargestSetting * (rank + 1)) / size) < rotorLargestSetting ? ((
 								for (r[7]=0;r[7] <= rMax[7]; r[7]++)
 									for (r[8]=0;r[8] <= rMax[8]; r[8]++)
 										for (r[9]=0; r[9] <= rMax[9]; r[9]++) {
-											if (rank == 6 || rank == 1)
-												cout << "proces " << rank << endl;
-											MPI_Ibcast(dummy,1,MPI_INT,0,MPI_COMM_WORLD,&endOfComputing);
 											MPI_Test(&endOfComputing,&endCheck,MPI_STATUS_IGNORE);
-											if (dummy[0]) {
-												cout << "Odebralem ibcast " << rank << endl;
+											//if (rank == 3 && endCheck)
+											//cout << "proces " << rank << dummy[0] << endl;
+											if (endCheck == 1) {
+												//cout << "Odebralem ibcast " << rank << endl;
 												goto EXIT_ALL_LOOPS;
 											}
 											if (rank == 0) {
@@ -106,7 +110,7 @@ rMax[0] = ((rotorLargestSetting * (rank + 1)) / size) < rotorLargestSetting ? ((
 													goto EXIT_ALL_LOOPS;
 											}
 											if ( solutionFound( r ) ) {
-												cout <<"Ja proces " << rank<< " Znalazłem rozwiązanie Wysyłam do procesu 0 coś takiego " << r[0] << endl;
+												//cout <<"Ja proces " << rank<< " Znalazłem rozwiązanie Wysyłam do procesu 0 coś takiego " << r[0] << endl;
 												
 												MPI_Isend(rankl,1,MPI_INT,0,3,MPI_COMM_WORLD,&finderRank);
 												MPI_Send(r,MAX_ROTORS,MPI_INT,0,2,MPI_COMM_WORLD);
@@ -117,12 +121,12 @@ rMax[0] = ((rotorLargestSetting * (rank + 1)) / size) < rotorLargestSetting ? ((
 		}
 	}
 	EXIT_ALL_LOOPS:
-	cout << "JA,dotarłem tutaj rank " << rank << endl;
+	//cout << "JA,dotarłem tutaj rank " << rank << endl;
 	if (rank ==0){
 		MPI_Recv(r,MAX_ROTORS,MPI_INT,rankr[0],2,MPI_COMM_WORLD,MPI_STATUS_IGNORE);
 		dummy[0] = 1;
-		MPI_Ibcast(dummy,1,MPI_INT,0,MPI_COMM_WORLD,&endOfComputing);
-		cout << "Wyslalem ibcast " << rank << endl;
+		MPI_Ibcast(dummy,1,MPI_INT,0,duplicated_communicator,&endOfComputing);
+		//cout << "Wyslalem ibcast " << rank << endl;
 		
 		for ( uint rotor = 0; rotor < rotors; rotor++ ) {
 			this->rotorPositions[ rotor ] = r[ rotor ];
@@ -154,3 +158,5 @@ void MPIEnigmaBreaker::getResult( uint *rotorPositions ) {
 		rotorPositions[ rotor ] = this->rotorPositions[ rotor ];
 	}
 }
+
+
